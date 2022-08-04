@@ -1,5 +1,5 @@
 import { TodosAccess } from './todosAcess'
-import { getUploadUrl } from './attachmentUtils';
+// import { getUploadUrl } from './attachmentUtils';
 import { TodoItem } from '../models/TodoItem'
 import { CreateTodoRequest } from '../requests/CreateTodoRequest'
 import { UpdateTodoRequest } from '../requests/UpdateTodoRequest'
@@ -23,7 +23,7 @@ export async function getTodosForUser(userId: string): Promise<TodoItem[]> {
     return result
 }
 
-export async function createTodo(createTodoRequest: CreateTodoRequest, userId: string, attachmentUrl: string): Promise<TodoItem> {
+export async function createTodo(createTodoRequest: CreateTodoRequest, userId: string): Promise<TodoItem> {
     logger.info(`createTodo: ${createTodoRequest}`, {
         key: userId
     })
@@ -35,13 +35,13 @@ export async function createTodo(createTodoRequest: CreateTodoRequest, userId: s
         createdAt: new Date().toISOString(),
         name: createTodoRequest.name,
         dueDate: createTodoRequest.dueDate,
-        done: false,
-        attachmentUrl: attachmentUrl
+        done: false
     }
 
     const result = await todosAcess.createTodo(newTodo)
     logger.info(`createTodo: successfully`, {
-        key: userId
+        key: userId,
+        newTodo: newTodo
     })
     return result
 }
@@ -62,7 +62,8 @@ export async function updateTodo(updateTodoRequest: UpdateTodoRequest, userId: s
 
     await todosAcess.updateTodo(updateTodo, userId, todoId);
     logger.info(`updateTodo: successfully`, {
-        key: userId
+        key: userId,
+        updateTodo: updateTodo
     })
 }
 
@@ -76,16 +77,17 @@ export async function deleteTodo(userId: string, todoId: string) {
     })
 }
 
-export async function createAttachmentPresignedUrl(userId: string, todoId: string) {
-    logger.info(`createAttachmentPresignedUrl: ${todoId}`, {
+export async function createAttachmentPresignedUrl(todoId: string, userId: string, attachmentUrl: string) {
+    logger.info(`createAttachmentPresignedUrl: ${attachmentUrl}`, {
         key: userId
     })
-    const url = getUploadUrl(todoId)
-    const result = await todosAcess.createAttactmentPresignedUrl(userId, todoId, url.split("?")[0])
+
+    const result = await todosAcess.createAttachmentPresignedUrl(todoId, userId, attachmentUrl);
+
     logger.info(`createAttachmentPresignedUrl: successfully`, {
         key: userId
     })
     return result
-}
+  }
 
 

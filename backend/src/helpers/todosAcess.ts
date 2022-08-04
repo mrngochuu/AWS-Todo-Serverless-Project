@@ -4,6 +4,7 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { createLogger } from '../utils/logger'
 import { TodoItem } from '../models/TodoItem'
 import { TodoUpdate } from '../models/TodoUpdate';
+// import { UpdateRequest } from "../requests/UpdateRequest";
 // import { ProcessBehavior } from 'aws-sdk/clients/lexmodelbuildingservice';
 
 const AWSXRay = require('aws-xray-sdk')
@@ -15,9 +16,8 @@ const logger = createLogger('TodosAccess')
 // TODO: Implement the dataLayer logic
 export class TodosAccess {
     constructor(
-        private readonly docClient: DocumentClient = createDynamoDBClient(),
-        private readonly todosTable = process.env.TODOS_TABLE
-    ) {
+        private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
+        private readonly todosTable = process.env.TODOS_TABLE) {
     }
 
     async getTodosForUser(userId: string): Promise<TodoItem[]> {
@@ -35,9 +35,10 @@ export class TodosAccess {
     async createTodo(todo: TodoItem): Promise<TodoItem> {
         logger.info(`Createing a todo with id ${todo.todoId}`)
         await this.docClient.put({
-            TableName: this.todosTable,
-            Item: todo
-        })
+          TableName: this.todosTable,
+          Item: todo
+        }).promise()
+    
         return todo
     }
 
@@ -49,13 +50,16 @@ export class TodosAccess {
                 userId,
                 todoId
             },
-            UpdateExpression: 'set name = :name, dueDate = :dueDate, done = :done',
+            UpdateExpression: 'set #nameTodo = :name, dueDate = :dueDate, done = :done',
             ConditionExpression: 'todoId = :todoId',
             ExpressionAttributeValues: {
                 ':todoId': todoId,
                 ':name': todo.name,
                 ':dueDate': todo.dueDate,
                 ':done': todo.done
+            },
+            ExpressionAttributeNames: {
+                '#nameTodo': 'name'
             }
         }).promise()
     }
@@ -71,32 +75,18 @@ export class TodosAccess {
         }).promise()
     }
 
-    async createAttactmentPresignedUrl(userId: string, todoId: string, attachmentUrl: string) {
-        logger.info(`Creating attachment presigned url with id: ${todoId}`)
-        await this.docClient.update({
+    async createAttachmentPresignedUrl(todoId: string, userId: string, attachmentUrl: string) {
+        const result = await this.docClient.update({
             TableName: this.todosTable,
             Key: {
                 userId,
                 todoId
             },
-            UpdateExpression: 'set attachmentUrl = :attachmentUrl',
+            UpdateExpression: 'set attachmentUrl=:attachmentUrl ',
             ExpressionAttributeValues: {
                 ':attachmentUrl': attachmentUrl
             }
-        })
-        return attachmentUrl
+        }).promise();
+        return result;
     }
 }
-
-function createDynamoDBClient() {
-    if (process.env.IS_OFFLINE) {
-        console.log('Creating a local DynamoDB instance')
-        return new XAWS.DynamoDB.DocumentClient({
-            region: 'localhost',
-            endpoint: 'http://localhost:8000'
-        })
-    }
-
-    return new XAWS.DynamoDB.DocumentClient()
-}
-

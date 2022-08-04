@@ -13,8 +13,7 @@ export const handler = middy(
     const userId = getUserId(event)
 
     // The attachmentUrl is not required field
-    const attachmentUrl = JSON.parse(event.body).attachmentUrl ? JSON.parse(event.body).attachmentUrl : null
-    const todo = await createTodo(newTodo, userId, attachmentUrl)
+    const todo = await createTodo(newTodo, userId)
     return {
       statusCode: 201,
       headers: {
