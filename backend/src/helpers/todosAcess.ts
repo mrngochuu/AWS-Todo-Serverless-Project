@@ -16,8 +16,7 @@ const logger = createLogger('TodosAccess')
 export class TodosAccess {
     constructor(
         private readonly docClient: DocumentClient = createDynamoDBClient(),
-        private readonly todosTable = process.env.TODOS_TABLE,
-        private readonly todosIndex = process.env.TODOS_CREATED_AT_INDEX
+        private readonly todosTable = process.env.TODOS_TABLE
     ) {
     }
 
@@ -25,7 +24,6 @@ export class TodosAccess {
         logger.info(`Get all todos for user: ${userId}`)
         const result = await this.docClient.query({
             TableName: this.todosTable,
-            IndexName: this.todosIndex,
             KeyConditionExpression: 'userId = :userId',
             ExpressionAttributeValues: {
                 ':userId': userId

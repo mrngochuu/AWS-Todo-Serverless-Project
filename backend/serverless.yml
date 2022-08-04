@@ -3,6 +3,9 @@ org: mrngochuu
 app: serverless-todo-app
 service: serverless-todo-app
 
+package:
+  individually: true
+
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
